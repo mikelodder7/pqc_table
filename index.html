@@ -135,7 +135,7 @@
             <!-- Description Banner based on Current Era selection -->
             <div id="era-descriptor" class="mt-4 p-3 rounded-lg bg-indigo-950/20 border border-indigo-900/30 text-xs text-indigo-200 flex items-center gap-3">
                 <i class="fa-solid fa-circle-info text-indigo-400 text-lg flex-shrink-0"></i>
-                <span>Currently viewing the <strong>Pre-PQC Era</strong>: Standard symmetric and public-key algorithms operate within normal risk margins. Rainbow (RB) remains broken classically.</span>
+                <span>Currently viewing the <strong>Pre-PQC Era</strong>: Standard symmetric and public-key algorithms operate within normal risk margins.</span>
             </div>
         </section>
 
@@ -166,9 +166,6 @@
                     <button onclick="filterSeverity('vulnerable')" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-amber-500/20 bg-amber-950/20 text-amber-400 hover:bg-amber-950/40 transition-all" id="btn-sev-vulnerable">
                         Quantum Vulnerable
                     </button>
-                    <button onclick="filterSeverity('broken')" class="px-3 py-1.5 text-xs font-bold rounded-lg border border-red-500/20 bg-red-950/20 text-red-400 hover:bg-red-950/40 transition-all" id="btn-sev-broken">
-                        Classically Broken
-                    </button>
                 </div>
 
                 <!-- Filter Row 2: Mathematical Family -->
@@ -193,7 +190,10 @@
                         Hash-Based Signature
                     </button>
                     <button onclick="filterFamily('code')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 border border-slate-800 text-pink-400 hover:border-pink-500 transition-all" id="btn-filter-code">
-                        Code / MV / Isogeny
+                        Code / MV
+                    </button>
+                    <button onclick="filterFamily('isogeny')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 border border-slate-800 text-violet-400 hover:border-violet-500 transition-all" id="btn-filter-isogeny">
+                        Isogeny
                     </button>
                 </div>
             </div>
@@ -395,6 +395,313 @@
 
     <!-- Script Layer -->
     <script>
+        const classicalAdditions = [
+            {
+                id: "r2",
+                symbol: "R2",
+                atomicNo: "RSA-2048",
+                name: "RSA 2048",
+                family: "factorization",
+                severity: "vulnerable",
+                row: 1,
+                col: 3,
+                function: "Asymmetric Encryption / Signatures",
+                mathBase: "Hardness of Integer Prime Factorization",
+                replaces: "Legacy 1024-bit RSA deployments",
+                standardDoc: "NIST SP 800-56B / FIPS 186-5",
+                publicKeySize: "2048 bits (256 Bytes modulus)",
+                sizeBytes: 256,
+                speedLevel: "Slow private key operations",
+                speedPercent: 24,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: Shor's algorithm factors the RSA modulus in polynomial time once large fault-tolerant quantum systems exist.",
+                secLevelClass: "112 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "r3",
+                symbol: "R3",
+                atomicNo: "RSA-3072",
+                name: "RSA 3072",
+                family: "factorization",
+                severity: "vulnerable",
+                row: 2,
+                col: 3,
+                function: "Asymmetric Encryption / Signatures",
+                mathBase: "Hardness of Integer Prime Factorization",
+                replaces: "RSA-2048 when 128-bit classical strength is required",
+                standardDoc: "NIST SP 800-56B / FIPS 186-5",
+                publicKeySize: "3072 bits (384 Bytes modulus)",
+                sizeBytes: 384,
+                speedLevel: "Very slow private key operations",
+                speedPercent: 18,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: Larger classical parameters do not protect RSA from Shor's factoring algorithm.",
+                secLevelClass: "128 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "r4",
+                symbol: "R4",
+                atomicNo: "RSA-4096",
+                name: "RSA 4096",
+                family: "factorization",
+                severity: "vulnerable",
+                row: 4,
+                col: 3,
+                function: "Asymmetric Encryption / Signatures",
+                mathBase: "Hardness of Integer Prime Factorization",
+                replaces: "RSA-3072 in conservative classical deployments",
+                standardDoc: "NIST SP 800-56B / FIPS 186-5",
+                publicKeySize: "4096 bits (512 Bytes modulus)",
+                sizeBytes: 512,
+                speedLevel: "Extremely slow private key operations",
+                speedPercent: 12,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: Increased modulus size raises classical cost but remains structurally exposed to quantum factoring.",
+                secLevelClass: "~150 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "e4",
+                symbol: "E4",
+                atomicNo: "RFC 8032",
+                name: "Ed448",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 7,
+                col: 4,
+                function: "Edwards-Curve Signatures",
+                mathBase: "ECDLP on Edwards448",
+                replaces: "Ed25519 where larger classical security margins are desired",
+                standardDoc: "IETF RFC 8032",
+                publicKeySize: "456 bits (57 Bytes public key)",
+                sizeBytes: 57,
+                speedLevel: "Fast but heavier than Ed25519",
+                speedPercent: 72,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: Edwards curves are elliptic-curve discrete-log systems and are broken by Shor's algorithm.",
+                secLevelClass: "224 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "x4",
+                symbol: "X4",
+                atomicNo: "RFC 7748",
+                name: "X448",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 8,
+                col: 4,
+                function: "Elliptic Curve Diffie-Hellman",
+                mathBase: "ECDLP on Curve448 Montgomery form",
+                replaces: "X25519 where larger classical security margins are desired",
+                standardDoc: "IETF RFC 7748",
+                publicKeySize: "448 bits (56 Bytes public key)",
+                sizeBytes: 56,
+                speedLevel: "Fast classical key agreement",
+                speedPercent: 76,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: X448 remains an elliptic-curve discrete-log key agreement and fails under Shor-capable quantum hardware.",
+                secLevelClass: "224 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "k1",
+                symbol: "K1",
+                atomicNo: "SEC 2",
+                name: "secp256k1",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 1,
+                col: 4,
+                function: "Elliptic Curve Signatures / Key Agreement",
+                mathBase: "ECDLP on Koblitz-form prime curve",
+                replaces: "Bitcoin-style ECDSA deployments and compact classical ECC",
+                standardDoc: "SEC 2 / Standards for Efficient Cryptography",
+                publicKeySize: "256-bit field (65 Bytes uncompressed point)",
+                sizeBytes: 65,
+                speedLevel: "Very fast classical ECC",
+                speedPercent: 84,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: secp256k1 is an elliptic-curve discrete-log system and is directly exposed to Shor's algorithm.",
+                secLevelClass: "128 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "p256r1",
+                symbol: "P2",
+                atomicNo: "FIPS 186",
+                name: "NIST P-256 / secp256r1",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 2,
+                col: 4,
+                function: "Elliptic Curve Signatures / Key Agreement",
+                mathBase: "ECDLP on NIST P-256 prime curve",
+                replaces: "RSA-3072 in classical TLS and certificate profiles",
+                standardDoc: "NIST FIPS 186-5 / SEC 2",
+                publicKeySize: "256-bit field (65 Bytes uncompressed point)",
+                sizeBytes: 65,
+                speedLevel: "Very fast classical ECC",
+                speedPercent: 82,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: NIST P-256 improves classical efficiency but remains an ECDLP primitive broken by Shor's algorithm.",
+                secLevelClass: "128 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "p384r1",
+                symbol: "P3",
+                atomicNo: "FIPS 186",
+                name: "NIST P-384 / secp384r1",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 4,
+                col: 4,
+                function: "Elliptic Curve Signatures / Key Agreement",
+                mathBase: "ECDLP on NIST P-384 prime curve",
+                replaces: "P-256 where larger classical security margins are required",
+                standardDoc: "NIST FIPS 186-5 / SEC 2",
+                publicKeySize: "384-bit field (97 Bytes uncompressed point)",
+                sizeBytes: 97,
+                speedLevel: "Fast classical ECC",
+                speedPercent: 68,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: A larger prime curve raises classical work factors only; quantum discrete-log attacks still apply.",
+                secLevelClass: "192 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "p521r1",
+                symbol: "P5",
+                atomicNo: "FIPS 186",
+                name: "NIST P-521 / secp521r1",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 12,
+                col: 4,
+                function: "Elliptic Curve Signatures / Key Agreement",
+                mathBase: "ECDLP on NIST P-521 prime curve",
+                replaces: "P-384 where maximum classical NIST prime-curve margin is desired",
+                standardDoc: "NIST FIPS 186-5 / SEC 2",
+                publicKeySize: "521-bit field (133 Bytes uncompressed point)",
+                sizeBytes: 133,
+                speedLevel: "Moderate classical ECC",
+                speedPercent: 56,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: P-521 provides a large classical elliptic-curve group, but Shor's algorithm targets the same ECDLP structure.",
+                secLevelClass: "256 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "bp256",
+                symbol: "B2",
+                atomicNo: "RFC 5639",
+                name: "brainpoolP256r1",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 9,
+                col: 4,
+                function: "Elliptic Curve Signatures / Key Agreement",
+                mathBase: "ECDLP on random Brainpool prime curve",
+                replaces: "NIST P-256 in Brainpool-profiled systems",
+                standardDoc: "IETF RFC 5639",
+                publicKeySize: "256-bit field (65 Bytes uncompressed point)",
+                sizeBytes: 65,
+                speedLevel: "Fast classical ECC",
+                speedPercent: 74,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: Random curve generation does not change the elliptic-curve discrete-log exposure to Shor's algorithm.",
+                secLevelClass: "128 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "bp384",
+                symbol: "B3",
+                atomicNo: "RFC 5639",
+                name: "brainpoolP384r1",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 10,
+                col: 4,
+                function: "Elliptic Curve Signatures / Key Agreement",
+                mathBase: "ECDLP on random Brainpool prime curve",
+                replaces: "P-384 in Brainpool-profiled systems",
+                standardDoc: "IETF RFC 5639",
+                publicKeySize: "384-bit field (97 Bytes uncompressed point)",
+                sizeBytes: 97,
+                speedLevel: "Moderate classical ECC",
+                speedPercent: 64,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: Larger Brainpool curves improve classical margins only; Shor's algorithm still targets ECDLP directly.",
+                secLevelClass: "192 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            },
+            {
+                id: "bp512",
+                symbol: "B5",
+                atomicNo: "RFC 5639",
+                name: "brainpoolP512r1",
+                family: "discrete-log",
+                severity: "vulnerable",
+                row: 11,
+                col: 4,
+                function: "Elliptic Curve Signatures / Key Agreement",
+                mathBase: "ECDLP on random Brainpool prime curve",
+                replaces: "P-521 in Brainpool-profiled systems",
+                standardDoc: "IETF RFC 5639",
+                publicKeySize: "512-bit field (129 Bytes uncompressed point)",
+                sizeBytes: 129,
+                speedLevel: "Moderate to slow classical ECC",
+                speedPercent: 54,
+                quantumStatus: "Quantum Vulnerable",
+                quantumDesc: "CRITICAL FAIL: Even 512-bit classical elliptic-curve groups are structurally vulnerable to quantum discrete-log solvers.",
+                secLevelClass: "256 bits",
+                isStandard: false,
+                statusBadge: "Vulnerable"
+            }
+        ];
+
+        const sntrupAdditions = [
+            {
+                id: "sntrup",
+                symbol: "Sn",
+                name: "SNTRUP",
+                publicKeySize: "1,158 - 2,067 Bytes public key / 1,039 - 1,847 Bytes ciphertext",
+                sizeBytes: 1623,
+                secLevelClass: "128 - 256 bits",
+                speedPercent: 82
+            }
+        ].map((item) => ({
+            ...item,
+            atomicNo: "NTRU Prime",
+            family: "lattice",
+            severity: "secure",
+            row: 7,
+            col: 5,
+            function: "Streamlined NTRU Prime KEM",
+            mathBase: "NTRU lattice over prime-field polynomial rings",
+            replaces: "ECDH in compact non-module-lattice deployments",
+            standardDoc: "NTRU Prime submission / SUPERCOP",
+            speedLevel: "Very fast lattice KEM",
+            quantumStatus: "Quantum Resistant",
+            quantumDesc: "Strong lattice fallback using NTRU Prime design choices that avoid common cyclotomic ring structure across the sntrup parameter set.",
+            isStandard: false,
+            statusBadge: "Secure"
+        }));
+
         // Core dataset mapped to unified severity styles.
         const elementsData = [
             // Row 1: Symmetric Foundations
@@ -402,7 +709,7 @@
                 id: "ae",
                 symbol: "Ae",
                 atomicNo: "FIPS 197",
-                name: "AES-256",
+                name: "AES",
                 family: "symmetric",
                 severity: "secure",
                 row: 1,
@@ -411,13 +718,13 @@
                 mathBase: "Substitution-Permutation Network",
                 replaces: "Triple DES (3DES), Blowfish",
                 standardDoc: "NIST FIPS 197",
-                publicKeySize: "256 bits (Key size)",
+                publicKeySize: "128 / 192 / 256-bit key sizes",
                 sizeBytes: 32,
                 speedLevel: "Hardware Accelerated (Ultra Fast)",
                 speedPercent: 99,
                 quantumStatus: "Quantum Resistant",
-                quantumDesc: "Grover's search algorithm cuts space parameter search to 128-bits of practical entropy. Remains completely quantum-safe.",
-                secLevelClass: "256 bits",
+                quantumDesc: "Grover's search algorithm reduces brute-force margins, so AES-256 is the conservative long-term quantum-resistant AES profile.",
+                secLevelClass: "128 - 256 bits",
                 isStandard: true,
                 statusBadge: "Secure"
             },
@@ -425,7 +732,7 @@
                 id: "ch",
                 symbol: "Ch",
                 atomicNo: "RFC 8439",
-                name: "ChaCha20",
+                name: "ChaCha",
                 family: "symmetric",
                 severity: "secure",
                 row: 2,
@@ -434,7 +741,7 @@
                 mathBase: "ARX (Addition-Rotation-XOR) Quarter-Rounds",
                 replaces: "RC4 stream ciphers",
                 standardDoc: "IETF RFC 8439",
-                publicKeySize: "256 bits (Key size)",
+                publicKeySize: "256-bit key size",
                 sizeBytes: 32,
                 speedLevel: "Blazing Software Execution",
                 speedPercent: 97,
@@ -444,35 +751,12 @@
                 isStandard: true,
                 statusBadge: "Secure"
             },
-            {
-                id: "ac",
-                symbol: "Ac",
-                atomicNo: "LWC",
-                name: "Ascon",
-                family: "symmetric",
-                severity: "secure",
-                row: 3,
-                col: 1,
-                function: "Lightweight Symmetric AEAD",
-                mathBase: "Permutation-based duplex sponge construction",
-                replaces: "AES-GCM inside small microcontrollers",
-                standardDoc: "NIST Lightweight Cryptography standard",
-                publicKeySize: "128 bits (Key size)",
-                sizeBytes: 16,
-                speedLevel: "Extremely Fast on Low-power chips",
-                speedPercent: 90,
-                quantumStatus: "Quantum Resistant (Contextual)",
-                quantumDesc: "Optimized for IoT limits. Under real-world constraints, a 128-bit symmetric limit is secure against quantum systems.",
-                secLevelClass: "128 bits",
-                isStandard: true,
-                statusBadge: "Secure"
-            },
             // Row 2: Hash & MAC Primitives
             {
                 id: "s2",
                 symbol: "S2",
                 atomicNo: "FIPS 180",
-                name: "SHA-256",
+                name: "SHA2",
                 family: "symmetric",
                 severity: "secure",
                 row: 1,
@@ -481,7 +765,7 @@
                 mathBase: "Merkle-Damgård design paradigm",
                 replaces: "SHA-1, MD5",
                 standardDoc: "NIST FIPS 180-4 Standard",
-                publicKeySize: "256-bit hash digest size",
+                publicKeySize: "224 - 512-bit hash digest sizes",
                 sizeBytes: 32,
                 speedLevel: "Fast (Hardware-accelerated)",
                 speedPercent: 92,
@@ -495,7 +779,7 @@
                 id: "s3",
                 symbol: "S3",
                 atomicNo: "FIPS 202",
-                name: "SHA3-256",
+                name: "SHA3",
                 family: "symmetric",
                 severity: "secure",
                 row: 2,
@@ -504,7 +788,7 @@
                 mathBase: "Keccak Sponge construction permutations",
                 replaces: "SHA-2 (structural security fallbacks)",
                 standardDoc: "NIST FIPS 202 Standard",
-                publicKeySize: "256-bit output digest",
+                publicKeySize: "224 - 512-bit hash digest sizes",
                 sizeBytes: 32,
                 speedLevel: "Moderately Fast",
                 speedPercent: 80,
@@ -515,13 +799,36 @@
                 statusBadge: "Secure"
             },
             {
+                id: "xof",
+                symbol: "Xo",
+                atomicNo: "FIPS 202",
+                name: "SHAKE",
+                family: "symmetric",
+                severity: "secure",
+                row: 3,
+                col: 2,
+                function: "Extendable-Output Function",
+                mathBase: "Keccak sponge construction with variable-length output",
+                replaces: "Fixed-output hash functions where domain separation or variable output is required",
+                standardDoc: "NIST FIPS 202 Standard",
+                publicKeySize: "Variable-length XOF output",
+                sizeBytes: 64,
+                speedLevel: "Moderately Fast",
+                speedPercent: 78,
+                quantumStatus: "Quantum Resistant",
+                quantumDesc: "SHAKE is not exposed to Shor's algebraic attack path; output length can be selected to preserve desired quantum-era margins.",
+                secLevelClass: "128 - 256 bits",
+                isStandard: true,
+                statusBadge: "Secure"
+            },
+            {
                 id: "hm",
                 symbol: "Hm",
                 atomicNo: "FIPS 198",
                 name: "HMAC",
                 family: "symmetric",
                 severity: "secure",
-                row: 3,
+                row: 4,
                 col: 2,
                 function: "Message Authentication Code",
                 mathBase: "Double nested cryptographic hashing iterations",
@@ -608,6 +915,7 @@
                 isStandard: false,
                 statusBadge: "Vulnerable"
             },
+            ...classicalAdditions,
             {
                 id: "eh",
                 symbol: "Eh",
@@ -770,6 +1078,7 @@
                 isStandard: false,
                 statusBadge: "Secure"
             },
+            ...sntrupAdditions,
             // Row 6: Unstructured Lattices / Isogeny
             {
                 id: "fr",
@@ -784,29 +1093,29 @@
                 mathBase: "Plain Learning with Errors (LWE)",
                 replaces: "Standard structured lattice KEMs where ring structure is avoided for safety",
                 standardDoc: "Supported by BSI (German Federal Office)",
-                publicKeySize: "9,616 Bytes (Massive overhead)",
-                sizeBytes: 9616,
-                speedLevel: "Moderate (Heavy Matrix multiplications)",
-                speedPercent: 45,
+                publicKeySize: "9,616 - 21,520 Bytes public key / 9,720 - 21,632 Bytes ciphertext",
+                sizeBytes: 15632,
+                speedLevel: "Moderate to slow matrix arithmetic",
+                speedPercent: 34,
                 quantumStatus: "Extremely Quantum Secure",
                 quantumDesc: "The most conservative lattice KEM choice. Avoids polynomial structured rings to prevent future algebraic cryptanalysis exploits.",
-                secLevelClass: "128 bits",
+                secLevelClass: "128 - 256 bits",
                 isStandard: false,
                 statusBadge: "Secure"
             },
             {
                 id: "sq",
                 symbol: "Sq",
-                atomicNo: "Academic",
+                atomicNo: "Round 3",
                 name: "SQIsign",
-                family: "code",
+                family: "isogeny",
                 severity: "secure",
                 row: 5,
-                col: 6,
+                col: 10,
                 function: "Isogeny-Based Signature Scheme",
                 mathBase: "Self-endomorphism ring evaluations",
                 replaces: "Classic high-payload signatures (Like ML-DSA where key sizes are too large)",
-                standardDoc: "Active NIST Signature On-Ramp Candidate",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
                 publicKeySize: "64 Bytes (Tiny public keys)",
                 sizeBytes: 64,
                 speedLevel: "Extremely Slow Signing / Moderate verification",
@@ -901,13 +1210,13 @@
                 mathBase: "Hardness of decoding random linear Goppa Codes",
                 replaces: "Traditional Asymmetric protocols in critical endpoints",
                 standardDoc: "NIST PQC Round 4 Alternate",
-                publicKeySize: "261,120 Bytes (Extremely Massive Keys)",
-                sizeBytes: 261120,
-                speedLevel: "Ultra Fast Decryption / Extremely Slow Key Generation",
-                speedPercent: 42,
+                publicKeySize: "261,120 - 1,357,824 Bytes public key / 96 - 208 Bytes ciphertext",
+                sizeBytes: 1044992,
+                speedLevel: "Fast encapsulation / very slow key generation",
+                speedPercent: 34,
                 quantumStatus: "Extremely Quantum Secure",
-                quantumDesc: "The gold standard of quantum security. Mathematically unbroken since McEliece introduced it in 1978.",
-                secLevelClass: "128 bits",
+                quantumDesc: "The gold standard of quantum security. Mathematically unbroken since McEliece introduced it in 1978, but with extremely large public keys across the parameter set.",
+                secLevelClass: "128 - 256 bits",
                 isStandard: false,
                 statusBadge: "Secure"
             },
@@ -915,53 +1224,30 @@
                 id: "hq",
                 symbol: "Hq",
                 atomicNo: "Round 4",
-                name: "HQC",
+                name: "HQC-KEM",
                 family: "code",
                 severity: "secure",
                 row: 4,
                 col: 8,
-                function: "QC-MDPC Key Encapsulation",
-                mathBase: "Quasi-Cyclic Moderate Density Parity Check Codes",
+                function: "Code-Based Key Encapsulation",
+                mathBase: "Hamming Quasi-Cyclic code problem",
                 replaces: "Lattice KEMs (as a strategic non-lattice fallback)",
                 standardDoc: "NIST PQC Round 4 standardized",
-                publicKeySize: "2,240 Bytes",
-                sizeBytes: 2240,
-                speedLevel: "Moderate",
-                speedPercent: 62,
+                publicKeySize: "2,249 - 7,245 Bytes public key / 4,433 - 14,421 Bytes ciphertext",
+                sizeBytes: 4522,
+                speedLevel: "Moderate code-based KEM",
+                speedPercent: 54,
                 quantumStatus: "Quantum Resistant",
-                quantumDesc: "Provides code-based safety backups with significantly smaller parameters than Classic McEliece.",
-                secLevelClass: "128 bits",
+                quantumDesc: "NIST-selected backup KEM family based on code problems rather than lattice assumptions, with substantially smaller public keys than Classic McEliece.",
+                secLevelClass: "128 - 256 bits",
                 isStandard: true,
-                statusBadge: "Secure"
-            },
-            {
-                id: "bi",
-                symbol: "Bi",
-                atomicNo: "Candidate",
-                name: "BIKE-KEM",
-                family: "code",
-                severity: "secure",
-                row: 5,
-                col: 8,
-                function: "QC-MDPC Code Key Encapsulation",
-                mathBase: "Quasi-Cyclic Moderate Density Parity Check",
-                replaces: "ECDH in high-bandwidth configurations",
-                standardDoc: "NIST Round 4 Selection Draft",
-                publicKeySize: "1,541 Bytes",
-                sizeBytes: 1541,
-                speedLevel: "Moderately Fast",
-                speedPercent: 70,
-                quantumStatus: "Quantum Resistant",
-                quantumDesc: "A sleek non-lattice key encapsulation option optimized for network communications.",
-                secLevelClass: "128 bits",
-                isStandard: false,
                 statusBadge: "Secure"
             },
             // Row 9: Multivariate Systems & Unstable Isotopes
             {
                 id: "uo",
                 symbol: "Uo",
-                atomicNo: "On-Ramp",
+                atomicNo: "Round 3",
                 name: "UOV",
                 family: "multivariate",
                 severity: "secure",
@@ -970,7 +1256,7 @@
                 function: "Unbalanced Oil and Vinegar Signature",
                 mathBase: "Quadratic Systems of Equations",
                 replaces: "ML-DSA inside highly constrained validation fields",
-                standardDoc: "NIST PQC Signature On-Ramp Candidate",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
                 publicKeySize: "3,112 Bytes (Extremely small 128-byte signatures)",
                 sizeBytes: 3112,
                 speedLevel: "Very Fast Verification",
@@ -984,7 +1270,7 @@
             {
                 id: "my",
                 symbol: "My",
-                atomicNo: "On-Ramp",
+                atomicNo: "Round 3",
                 name: "MAYO",
                 family: "multivariate",
                 severity: "secure",
@@ -993,7 +1279,7 @@
                 function: "Multivariate Digital Signature",
                 mathBase: "Unbalanced Oil and Vinegar modifications",
                 replaces: "Lattice Signatures (ML-DSA) where space is constrained",
-                standardDoc: "NIST PQC Signature On-Ramp Candidate",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
                 publicKeySize: "3,112 Bytes",
                 sizeBytes: 3112,
                 speedLevel: "Fast",
@@ -1005,27 +1291,142 @@
                 statusBadge: "Secure"
             },
             {
-                id: "rb",
-                symbol: "Rb",
-                atomicNo: "DECAYED",
-                name: "Rainbow",
+                id: "sv",
+                symbol: "Sv",
+                atomicNo: "Round 3",
+                name: "SNOVA",
                 family: "multivariate",
-                severity: "broken",
+                severity: "secure",
                 row: 7,
                 col: 9,
-                function: "Multivariate Digital Signature (Broken)",
-                mathBase: "Multi-layered Unbalanced Oil and Vinegar matrices",
-                replaces: "None (Completely broken)",
-                standardDoc: "NIST Round 3 Finalist (Withdrawn after cryptanalysis defeat)",
-                publicKeySize: "Over 150,000 Bytes",
-                sizeBytes: 150000,
-                speedLevel: "Unusable (Insecure)",
-                speedPercent: 5,
-                quantumStatus: "Catastrophically Broken",
-                quantumDesc: "DECAYED ISOTOPE: Classical algebraic cryptanalysis broke its entire security parameter range in 2022. Exposes complete private keys.",
-                secLevelClass: "0 bits (Broken classically)",
+                function: "Multivariate Digital Signature",
+                mathBase: "UOV-style structured multivariate quadratic equations",
+                replaces: "Lattice signatures where compact signatures and fast verification are prioritized",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
+                publicKeySize: "Parameter-set dependent public key and compact signature sizes",
+                sizeBytes: 4096,
+                speedLevel: "Fast verification / moderate signing",
+                speedPercent: 72,
+                quantumStatus: "Quantum Resistant",
+                quantumDesc: "Round 3 additional-signature candidate using structured multivariate equations instead of lattice assumptions.",
+                secLevelClass: "128 - 256 bits",
                 isStandard: false,
-                statusBadge: "Broken"
+                statusBadge: "Secure"
+            },
+            {
+                id: "qr",
+                symbol: "Qr",
+                atomicNo: "Round 3",
+                name: "QR-UOV",
+                family: "multivariate",
+                severity: "secure",
+                row: 8,
+                col: 9,
+                function: "Multivariate Digital Signature",
+                mathBase: "UOV-style multivariate quadratic equations",
+                replaces: "Lattice signatures where multivariate diversity is desired",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
+                publicKeySize: "Parameter-set dependent public key and compact signature sizes",
+                sizeBytes: 4096,
+                speedLevel: "Fast verification / moderate signing",
+                speedPercent: 70,
+                quantumStatus: "Quantum Resistant",
+                quantumDesc: "Round 3 additional-signature candidate in the UOV family, adding another multivariate option to the portfolio.",
+                secLevelClass: "128 - 256 bits",
+                isStandard: false,
+                statusBadge: "Secure"
+            },
+            {
+                id: "fa",
+                symbol: "Fa",
+                atomicNo: "Round 3",
+                name: "FAEST",
+                family: "multivariate",
+                severity: "secure",
+                row: 9,
+                col: 9,
+                function: "Symmetric-Based Digital Signature",
+                mathBase: "MPC-in-the-head proof of AES execution",
+                replaces: "Classical signatures where conservative symmetric assumptions are preferred",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
+                publicKeySize: "Parameter-set dependent; signatures are comparatively large",
+                sizeBytes: 8000,
+                speedLevel: "Moderate zero-knowledge transcript cost",
+                speedPercent: 48,
+                quantumStatus: "Quantum Resistant",
+                quantumDesc: "Security is tied to symmetric primitive strength and MPC-in-the-head soundness rather than number-theoretic assumptions.",
+                secLevelClass: "128 - 256 bits",
+                isStandard: false,
+                statusBadge: "Secure"
+            },
+            {
+                id: "mq",
+                symbol: "Mq",
+                atomicNo: "Round 3",
+                name: "MQOM",
+                family: "multivariate",
+                severity: "secure",
+                row: 10,
+                col: 9,
+                function: "MPC-in-the-Head Digital Signature",
+                mathBase: "Multivariate quadratic proof system with Fiat-Shamir transform",
+                replaces: "Lattice signatures in diversified experimental portfolios",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
+                publicKeySize: "Parameter-set dependent; signatures carry MPC proof material",
+                sizeBytes: 10000,
+                speedLevel: "Moderate zero-knowledge proof cost",
+                speedPercent: 46,
+                quantumStatus: "Quantum Resistant",
+                quantumDesc: "MPC-in-the-head candidate built around MQ hardness and non-lattice assumptions.",
+                secLevelClass: "128 - 256 bits",
+                isStandard: false,
+                statusBadge: "Secure"
+            },
+            {
+                id: "sd",
+                symbol: "Sd",
+                atomicNo: "Round 3",
+                name: "SDitH",
+                family: "multivariate",
+                severity: "secure",
+                row: 11,
+                col: 9,
+                function: "MPC-in-the-Head Digital Signature",
+                mathBase: "Syndrome decoding proof system with Fiat-Shamir transform",
+                replaces: "Lattice signatures with code-based MPC-in-the-head diversity",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
+                publicKeySize: "Parameter-set dependent; signatures carry decoding proof transcripts",
+                sizeBytes: 12000,
+                speedLevel: "Moderate to slow proof generation",
+                speedPercent: 38,
+                quantumStatus: "Quantum Resistant",
+                quantumDesc: "MPC-in-the-head Round 3 candidate based on syndrome decoding, aligned with code-based hardness rather than lattices.",
+                secLevelClass: "128 - 256 bits",
+                isStandard: false,
+                statusBadge: "Secure"
+            },
+            {
+                id: "hk",
+                symbol: "Hk",
+                atomicNo: "Round 3",
+                name: "HAWK",
+                family: "multivariate",
+                severity: "secure",
+                row: 12,
+                col: 9,
+                function: "Lattice-Based Digital Signature",
+                mathBase: "Hash-and-sign over lattice problems",
+                replaces: "ML-DSA where alternate lattice-signature tradeoffs are under evaluation",
+                standardDoc: "NIST Additional Signatures Round 3 Candidate",
+                publicKeySize: "Parameter-set dependent lattice signature payloads",
+                sizeBytes: 1400,
+                speedLevel: "Fast lattice signing and verification",
+                speedPercent: 78,
+                quantumStatus: "Quantum Resistant",
+                quantumDesc: "Round 3 additional-signature candidate based on lattice problems, evaluated as an alternate signature design.",
+                secLevelClass: "128 - 256 bits",
+                isStandard: false,
+                statusBadge: "Secure"
             },
             // Composite / Isotope Section: Hybrid Schemes
             {
@@ -1185,13 +1586,13 @@
 
             // 1. Determine Columns and initial grouping mapping
             if (currentGrouping === 'family') {
-                columns = ['Symmetric', 'Hash / MAC', 'Factorization', 'Elliptic Curve', 'Struct. Lattice', 'Unstruct. Lat', 'Stateful Hash', 'Code Based', 'Multivariate'];
-                gridContainer.style.gridTemplateColumns = `repeat(9, minmax(115px, 1fr))`;
-                headersContainer.style.gridTemplateColumns = `repeat(9, minmax(115px, 1fr))`;
-                gridContainer.style.minWidth = "950px";
-                headersContainer.style.minWidth = "950px";
+                columns = ['Symmetric', 'Hash / MAC', 'Factorization', 'Elliptic Curve', 'Struct. Lattice', 'Unstruct. Lat', 'Stateful Hash', 'Code Based', 'Multivariate', 'Isogeny'];
+                gridContainer.style.gridTemplateColumns = `repeat(10, minmax(115px, 1fr))`;
+                headersContainer.style.gridTemplateColumns = `repeat(10, minmax(115px, 1fr))`;
+                gridContainer.style.minWidth = "1080px";
+                headersContainer.style.minWidth = "1080px";
 
-                layoutCols = Array.from({length: 9}, () => []);
+                layoutCols = Array.from({length: 10}, () => []);
                 elementsData.forEach(el => layoutCols[el.col - 1].push(el));
 
             } else if (currentGrouping === 'speed') {
@@ -1241,12 +1642,22 @@
 
             // 3. Perform Sub-Sorting and Rendering
             if (currentGrouping === 'family' && currentSorting === 'default') {
-                // Legacy coordinate layout specifically for family default
+                // Family default keeps the established row ordering, but packs each
+                // column so expanded parameter families remain visible.
                 footerInfo.classList.remove('hidden');
+
+                layoutCols.forEach(colArr => colArr.sort((a, b) => {
+                    if (a.row !== b.row) return a.row - b.row;
+                    return a.name.localeCompare(b.name);
+                }));
+
+                layoutCols.forEach(colArr => {
+                    if (colArr.length > maxRows) maxRows = colArr.length;
+                });
                 
-                for (let r = 1; r <= 7; r++) {
-                    for (let c = 1; c <= 9; c++) {
-                        const el = elementsData.find(item => item.row === r && item.col === c);
+                for (let r = 0; r < maxRows; r++) {
+                    for (let c = 0; c < columns.length; c++) {
+                        const el = layoutCols[c][r];
                         if (el) {
                             gridContainer.appendChild(createElementCell(el));
                         } else {
@@ -1516,7 +1927,7 @@
             if (era === "classical") {
                 descriptor.innerHTML = `
                     <i class="fa-solid fa-circle-info text-indigo-400 text-lg flex-shrink-0"></i>
-                    <span>Currently viewing the <strong>Pre-PQC Era</strong>: Standard symmetric and public-key algorithms operate within normal risk margins. Rainbow (RB) remains broken classically.</span>
+                    <span>Currently viewing the <strong>Pre-PQC Era</strong>: Standard symmetric and public-key algorithms operate within normal risk margins.</span>
                 `;
             } else if (era === "hybrid") {
                 descriptor.innerHTML = `
@@ -1563,7 +1974,7 @@
 
         function filterFamily(family) {
             activeFamilyFilter = family;
-            const families = ["all", "symmetric", "factorization", "discrete-log", "lattice", "hash", "code"];
+            const families = ["all", "symmetric", "factorization", "discrete-log", "lattice", "hash", "code", "isogeny"];
             families.forEach(item => {
                 const btn = document.getElementById(`btn-filter-${item}`);
                 if (!btn) return;
@@ -1598,7 +2009,7 @@
                 // 2. Family filter (Fixed to catch hybrid combinations like XWing)
                 const isFamilyMatch = (activeFamilyFilter === "all") || 
                                       (el.family === activeFamilyFilter) || 
-                                      (activeFamilyFilter === "code" && (el.family === "code" || el.family === "multivariate" || el.family === "isogeny")) ||
+                                      (activeFamilyFilter === "code" && (el.family === "code" || el.family === "multivariate")) ||
                                       (activeFamilyFilter === "lattice" && el.family === "hybrid") ||
                                       (activeFamilyFilter === "discrete-log" && el.family === "hybrid");
 
